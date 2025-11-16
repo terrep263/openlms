@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { validateTenantAdmin } from '@/lib/access-control'
 import { prisma } from '@/lib/prisma'
-import { formatCurrency } from '@/lib/utils/format'
 import DeleteCourseButton from '@/components/DeleteCourseButton'
 
 export default async function CoursesPage({
@@ -69,9 +68,6 @@ export default async function CoursesPage({
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Access
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Price
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -102,21 +98,10 @@ export default async function CoursesPage({
                       {course.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        course.accessType === 'FREE'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-purple-100 text-purple-800'
-                      }`}
-                    >
-                      {course.accessType}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {course.accessType === 'PAID' && course.priceCents
-                      ? formatCurrency(course.priceCents, course.currency)
-                      : '-'}
+                    {Number(course.price) > 0
+                      ? `$${Number(course.price).toFixed(2)}`
+                      : 'Free'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {course._count.enrollments}

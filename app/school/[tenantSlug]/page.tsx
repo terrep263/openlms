@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { getTenantBySlug } from '@/lib/access-control'
 import { prisma } from '@/lib/prisma'
-import { formatCurrency } from '@/lib/utils/format'
 
 export default async function SchoolCatalogPage({
   params,
@@ -15,7 +14,6 @@ export default async function SchoolCatalogPage({
     where: {
       tenantId: tenant.id,
       status: 'PUBLISHED',
-      visibility: 'PUBLIC',
     },
     orderBy: { createdAt: 'desc' },
   })
@@ -49,9 +47,9 @@ export default async function SchoolCatalogPage({
               href={`/school/${tenant.slug}/courses/${course.slug}`}
               className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-lg"
             >
-              {course.thumbnailUrl ? (
+              {course.thumbnail ? (
                 <img
-                  src={course.thumbnailUrl}
+                  src={course.thumbnail}
                   alt={course.title}
                   className="h-48 w-full object-cover"
                 />
@@ -70,18 +68,10 @@ export default async function SchoolCatalogPage({
                   </p>
                 )}
                 <div className="mt-4 flex items-center justify-between">
-                  <span
-                    className={`text-sm font-semibold ${
-                      course.accessType === 'FREE'
-                        ? 'text-green-600'
-                        : 'text-indigo-600'
-                    }`}
-                  >
-                    {course.accessType === 'FREE'
-                      ? 'Free'
-                      : course.priceCents
-                      ? formatCurrency(course.priceCents, course.currency)
-                      : 'Paid'}
+                  <span className="text-sm font-semibold text-indigo-600">
+                    {Number(course.price) > 0
+                      ? `$${Number(course.price).toFixed(2)}`
+                      : 'Free'}
                   </span>
                   <span className="text-sm text-indigo-600 group-hover:underline">
                     View Course →

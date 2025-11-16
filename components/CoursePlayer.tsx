@@ -8,7 +8,6 @@ interface CoursePlayerProps {
     id: string
     title: string
     description: string | null
-    embedUrl: string | null
   }
   enrollment: {
     id: string
@@ -125,20 +124,17 @@ export default function CoursePlayer({ course, enrollment, tenantSlug }: CourseP
       </div>
 
       {/* Course Content */}
-      {course.embedUrl ? (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
-          <iframe
-            src={course.embedUrl}
-            className="h-[600px] w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            allowFullScreen
-          />
+      <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-12 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-4xl">
+          📚
         </div>
-      ) : (
-        <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-12 text-center">
-          <p className="text-gray-600">No content available for this course yet.</p>
-        </div>
-      )}
+        <h3 className="mt-4 text-lg font-medium text-gray-900">
+          Course Content Coming Soon
+        </h3>
+        <p className="mt-2 text-gray-600">
+          Course materials and lessons will be available here.
+        </p>
+      </div>
     </div>
   )
 }

@@ -27,7 +27,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 })
     }
 
-    if (course.accessType !== 'PAID' || !course.priceCents) {
+    const priceInCents = Math.round(Number(course.price) * 100)
+
+    if (Number(course.price) <= 0) {
       return NextResponse.json({ error: 'Course is not for sale' }, { status: 400 })
     }
 
@@ -42,11 +44,10 @@ export async function POST(request: NextRequest) {
     // Create pending order
     const order = await prisma.order.create({
       data: {
-        tenantId: session.tenantId,
         userId: session.userId,
         courseId: course.id,
-        amountCents: course.priceCents,
-        currency: course.currency,
+        amountCents: priceInCents,
+        currency: 'USD',
         status: 'PENDING',
       },
     })
@@ -58,12 +59,12 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price_data: {
-            currency: course.currency,
-            unit_amount: course.priceCents,
+            currency: 'usd',
+            unit_amount: priceInCents,
             product_data: {
               name: course.title,
               description: course.description || undefined,
-              images: course.thumbnailUrl ? [course.thumbnailUrl] : undefined,
+              images: course.thumbnail ? [course.thumbnail] : undefined,
             },
           },
           quantity: 1,
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
         tenantId: session.tenantId,
       },
       payment_intent_data: {
-        application_fee_amount: Math.floor(course.priceCents * 0.1), // 10% platform fee
+        application_fee_amount: Math.floor(priceInCents * 0.1), // 10% platform fee
         transfer_data: {
           destination: course.tenant.stripeConnectAccountId,
         },

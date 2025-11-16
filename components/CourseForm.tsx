@@ -11,13 +11,10 @@ interface CourseFormProps {
     title: string
     slug: string
     description: string | null
-    thumbnailUrl: string | null
-    embedUrl: string | null
-    accessType: string
-    priceCents: number | null
-    currency: string
+    thumbnail: string | null
+    price: number
     status: string
-    visibility: string
+    featured: boolean
   }
 }
 
@@ -27,13 +24,10 @@ export default function CourseForm({ tenantSlug, course }: CourseFormProps) {
     title: course?.title || '',
     slug: course?.slug || '',
     description: course?.description || '',
-    thumbnailUrl: course?.thumbnailUrl || '',
-    embedUrl: course?.embedUrl || '',
-    accessType: course?.accessType || 'FREE',
-    priceCents: course?.priceCents ? course.priceCents / 100 : 0,
-    currency: course?.currency || 'usd',
+    thumbnail: course?.thumbnail || '',
+    price: course?.price || 0,
     status: course?.status || 'DRAFT',
-    visibility: course?.visibility || 'PRIVATE',
+    featured: course?.featured || false,
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -54,7 +48,6 @@ export default function CourseForm({ tenantSlug, course }: CourseFormProps) {
     try {
       const payload = {
         ...formData,
-        priceCents: Math.round(formData.priceCents * 100),
         ...(course && { courseId: course.id }),
       }
 
@@ -135,16 +128,16 @@ export default function CourseForm({ tenantSlug, course }: CourseFormProps) {
           />
         </div>
 
-        <div>
-          <label htmlFor="thumbnailUrl" className="block text-sm font-medium text-gray-700">
+        <div className="md:col-span-2">
+          <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700">
             Thumbnail URL
           </label>
           <input
-            id="thumbnailUrl"
+            id="thumbnail"
             type="url"
-            value={formData.thumbnailUrl}
+            value={formData.thumbnail}
             onChange={(e) =>
-              setFormData({ ...formData, thumbnailUrl: e.target.value })
+              setFormData({ ...formData, thumbnail: e.target.value })
             }
             className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             placeholder="https://example.com/image.jpg"
@@ -152,59 +145,23 @@ export default function CourseForm({ tenantSlug, course }: CourseFormProps) {
         </div>
 
         <div>
-          <label htmlFor="embedUrl" className="block text-sm font-medium text-gray-700">
-            Embed URL (Video/Content)
+          <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+            Price (USD)
           </label>
           <input
-            id="embedUrl"
-            type="url"
-            value={formData.embedUrl}
+            id="price"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.price}
             onChange={(e) =>
-              setFormData({ ...formData, embedUrl: e.target.value })
+              setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
             }
             className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="https://youtube.com/embed/..."
+            placeholder="0.00"
           />
+          <p className="mt-1 text-sm text-gray-500">Set to 0 for free courses</p>
         </div>
-
-        <div>
-          <label htmlFor="accessType" className="block text-sm font-medium text-gray-700">
-            Access Type *
-          </label>
-          <select
-            id="accessType"
-            required
-            value={formData.accessType}
-            onChange={(e) =>
-              setFormData({ ...formData, accessType: e.target.value })
-            }
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="FREE">Free</option>
-            <option value="PAID">Paid</option>
-          </select>
-        </div>
-
-        {formData.accessType === 'PAID' && (
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price (USD) *
-            </label>
-            <input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0"
-              required={formData.accessType === 'PAID'}
-              value={formData.priceCents}
-              onChange={(e) =>
-                setFormData({ ...formData, priceCents: parseFloat(e.target.value) })
-              }
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="29.99"
-            />
-          </div>
-        )}
 
         <div>
           <label htmlFor="status" className="block text-sm font-medium text-gray-700">
@@ -221,25 +178,27 @@ export default function CourseForm({ tenantSlug, course }: CourseFormProps) {
           >
             <option value="DRAFT">Draft</option>
             <option value="PUBLISHED">Published</option>
+            <option value="ARCHIVED">Archived</option>
           </select>
         </div>
 
-        <div>
-          <label htmlFor="visibility" className="block text-sm font-medium text-gray-700">
-            Visibility *
+        <div className="md:col-span-2">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formData.featured}
+              onChange={(e) =>
+                setFormData({ ...formData, featured: e.target.checked })
+              }
+              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Featured Course
+            </span>
           </label>
-          <select
-            id="visibility"
-            required
-            value={formData.visibility}
-            onChange={(e) =>
-              setFormData({ ...formData, visibility: e.target.value })
-            }
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="PRIVATE">Private</option>
-            <option value="PUBLIC">Public</option>
-          </select>
+          <p className="mt-1 ml-6 text-sm text-gray-500">
+            Featured courses appear prominently on the homepage
+          </p>
         </div>
       </div>
 

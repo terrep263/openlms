@@ -2,7 +2,6 @@ import { getTenantBySlug } from '@/lib/access-control'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
-import { formatCurrency } from '@/lib/utils/format'
 import CoursePlayer from '@/components/CoursePlayer'
 import PurchaseButton from '@/components/PurchaseButton'
 
@@ -27,7 +26,7 @@ export default async function CourseDetailPage({
   }
 
   // Check if course is accessible
-  if (course.status !== 'PUBLISHED' || course.visibility !== 'PUBLIC') {
+  if (course.status !== 'PUBLISHED') {
     // Only allow tenant admins to view
     if (!session || session.tenantId !== tenant.id || session.role !== 'TENANT_ADMIN') {
       notFound()
@@ -39,9 +38,9 @@ export default async function CourseDetailPage({
     return (
       <div className="mx-auto max-w-4xl">
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
-          {course.thumbnailUrl && (
+          {course.thumbnail && (
             <img
-              src={course.thumbnailUrl}
+              src={course.thumbnail}
               alt={course.title}
               className="h-64 w-full object-cover"
             />
@@ -86,8 +85,10 @@ export default async function CourseDetailPage({
     },
   })
 
+  const isFree = Number(course.price) === 0
+
   // Auto-enroll in free courses
-  if (!enrollment && course.accessType === 'FREE') {
+  if (!enrollment && isFree) {
     enrollment = await prisma.enrollment.create({
       data: {
         userId: session.userId,
@@ -99,13 +100,13 @@ export default async function CourseDetailPage({
   }
 
   // If not enrolled and course is paid, show purchase page
-  if (!enrollment && course.accessType === 'PAID') {
+  if (!enrollment && !isFree) {
     return (
       <div className="mx-auto max-w-4xl">
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
-          {course.thumbnailUrl && (
+          {course.thumbnail && (
             <img
-              src={course.thumbnailUrl}
+              src={course.thumbnail}
               alt={course.title}
               className="h-64 w-full object-cover"
             />
@@ -117,9 +118,7 @@ export default async function CourseDetailPage({
             )}
             <div className="mt-8 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 p-8 text-center">
               <p className="text-4xl font-bold text-gray-900">
-                {course.priceCents
-                  ? formatCurrency(course.priceCents, course.currency)
-                  : 'Paid Course'}
+                ${Number(course.price).toFixed(2)}
               </p>
               <p className="mt-2 text-gray-600">One-time payment for lifetime access</p>
               <div className="mt-6">

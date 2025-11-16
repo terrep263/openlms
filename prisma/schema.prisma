@@ -47,18 +47,6 @@ enum CourseStatus {
   ARCHIVED
 }
 
-enum CourseAccessType {
-  FREE
-  PAID
-  SUBSCRIPTION
-}
-
-enum CourseVisibility {
-  PUBLIC
-  PRIVATE
-  UNLISTED
-}
-
 enum EnrollmentStatus {
   ACTIVE
   IN_PROGRESS
@@ -148,25 +136,19 @@ model Category {
 }
 
 model Course {
-  id           String              @id @default(cuid())
-  title        String
-  slug         String
-  description  String?
-  thumbnail    String?
-  thumbnailUrl String?             // Alias for thumbnail
-  embedUrl     String?
-  price        Decimal             @default(0) @db.Decimal(10, 2)
-  priceCents   Int?                // Price in cents for compatibility
-  currency     String?             @default("USD")
-  status       CourseStatus        @default(DRAFT)
-  accessType   CourseAccessType    @default(FREE)
-  visibility   CourseVisibility    @default(PUBLIC)
-  featured     Boolean             @default(false)
-  level        String?
-  duration     Int?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  publishedAt  DateTime?
+  id          String        @id @default(cuid())
+  title       String
+  slug        String
+  description String?
+  thumbnail   String?
+  price       Decimal       @default(0) @db.Decimal(10, 2)
+  status      CourseStatus  @default(DRAFT)
+  featured    Boolean       @default(false)
+  level       String?
+  duration    Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
 
   tenantId    String
   tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -187,8 +169,6 @@ model Course {
   @@index([instructorId])
   @@index([categoryId])
   @@index([status])
-  @@index([visibility])
-  @@index([accessType])
 }
 
 model Module {

@@ -122,11 +122,10 @@ export async function POST(request: NextRequest) {
         title: 'Introduction to Web Development',
         slug: 'intro-to-web-dev',
         description: 'Learn the basics of HTML, CSS, and JavaScript in this beginner-friendly course.',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
-        embedUrl: 'https://www.youtube.com/embed/UB1O30fR-EE',
-        accessType: 'FREE',
+        thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
+        price: 0,
         status: 'PUBLISHED',
-        visibility: 'PUBLIC',
+        featured: true,
       },
     })
 
@@ -137,13 +136,10 @@ export async function POST(request: NextRequest) {
         title: 'Advanced React Patterns',
         slug: 'advanced-react',
         description: 'Master advanced React patterns including hooks, context, and performance optimization.',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800',
-        embedUrl: 'https://www.youtube.com/embed/3XaXKiXtNjw',
-        accessType: 'PAID',
-        priceCents: 4999,
-        currency: 'usd',
+        thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800',
+        price: 49.99,
         status: 'PUBLISHED',
-        visibility: 'PUBLIC',
+        featured: true,
       },
     })
 
@@ -154,8 +150,9 @@ export async function POST(request: NextRequest) {
         title: 'Coming Soon: Full Stack Development',
         slug: 'coming-soon',
         description: 'A comprehensive course on building full-stack applications.',
+        price: 0,
         status: 'DRAFT',
-        visibility: 'PRIVATE',
+        featured: false,
       },
     })
 

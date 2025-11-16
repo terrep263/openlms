@@ -22,6 +22,12 @@ export default async function EditCoursePage({
     notFound()
   }
 
+  // Convert Decimal to number for the form
+  const courseData = {
+    ...course,
+    price: Number(course.price),
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -30,7 +36,7 @@ export default async function EditCoursePage({
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-8">
-        <CourseForm tenantSlug={tenantSlug} course={course} />
+        <CourseForm tenantSlug={tenantSlug} course={courseData} />
       </div>
     </div>
   )

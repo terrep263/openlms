@@ -213,6 +213,13 @@ export async function POST(request: NextRequest) {
         'For Neon: ensure connection string ends with ?sslmode=require',
         'Check Vercel environment variables',
       ]
+    } else if (error.message?.includes('does not exist') || error.message?.includes('42704')) {
+      errorGuidance = [
+        'Database schema is not synced - tables/types missing',
+        'The build process should auto-sync the schema',
+        'Trigger a redeploy in Vercel to sync the schema',
+        'Or manually run: npx prisma db push',
+      ]
     } else if (error.message?.includes('Unique constraint')) {
       errorGuidance = [
         'Demo data already exists in database',
@@ -222,8 +229,8 @@ export async function POST(request: NextRequest) {
     } else if (error.message?.includes('Foreign key')) {
       errorGuidance = [
         'Database schema may be out of sync',
-        'Run: npx prisma db push',
-        'Or check that migrations are applied',
+        'Trigger a redeploy in Vercel to sync the schema',
+        'Or manually run: npx prisma db push',
       ]
     } else {
       errorGuidance = [

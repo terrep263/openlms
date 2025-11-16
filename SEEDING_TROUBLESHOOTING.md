@@ -1,6 +1,37 @@
 # Database Seeding Troubleshooting Guide
 
-## Common Error: "Failed to seed database"
+## Common Errors
+
+### Error: "Database schema not synced" or "type does not exist"
+
+This error means your database doesn't have the required tables and types yet. The Prisma schema hasn't been pushed to the database.
+
+**Error message examples:**
+- `type "public.TenantPlan" does not exist`
+- `relation "Tenant" does not exist`
+- Error code: `42704` or `42P01`
+
+**Fix:**
+1. Ensure `DATABASE_URL` is set in Vercel environment variables
+2. **Trigger a new deployment** - this will automatically sync the schema:
+   - Go to Vercel Dashboard
+   - Navigate to your project
+   - Click **Deployments**
+   - Find the latest deployment
+   - Click the ⋯ menu → **Redeploy**
+3. Wait for the build to complete
+4. The schema will be automatically pushed during build
+5. Try seeding again
+
+**What happens during deployment:**
+- Build runs: `prisma generate && prisma db push && next build`
+- Prisma generates the client
+- Prisma pushes schema to database (creates tables/types)
+- Next.js builds the app
+
+---
+
+### Error: "Failed to seed database" (general)
 
 If you see this error when trying to seed your database, follow these steps:
 

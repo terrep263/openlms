@@ -82,6 +82,30 @@ export async function GET() {
     checks.prisma.status = 'failed'
     checks.prisma.error = error.message
 
+    // Check for schema sync issues specifically
+    const isSchemaIssue =
+      error.message?.includes('does not exist') ||
+      error.message?.includes('42704') ||
+      error.message?.includes('42P01')
+
+    if (isSchemaIssue) {
+      return NextResponse.json(
+        {
+          healthy: false,
+          checks,
+          error: 'Database schema not synced',
+          details: 'Database tables or types are missing',
+          fix: [
+            '1. Ensure DATABASE_URL is set in Vercel environment variables',
+            '2. Trigger a new deployment in Vercel (this will auto-sync the schema)',
+            '3. Go to: Vercel Dashboard > Deployments > Latest > Redeploy',
+            '4. Wait for build to complete, then try seeding again',
+          ],
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       {
         healthy: false,
@@ -89,8 +113,8 @@ export async function GET() {
         error: 'Prisma query failed',
         fix: [
           'Database schema may be out of sync',
-          'Run: npx prisma db push',
-          'Or check that migrations are applied',
+          'Trigger a redeploy in Vercel to sync the schema',
+          'Or manually run: npx prisma db push',
           'Verify Prisma client is generated',
         ],
       },

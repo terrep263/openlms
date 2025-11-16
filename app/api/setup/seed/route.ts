@@ -19,6 +19,43 @@ export async function POST(request: NextRequest) {
 
     console.log('🌱 Starting database seed...')
 
+    // Check if DATABASE_URL is set
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        {
+          error: 'DATABASE_URL not configured',
+          details: 'The DATABASE_URL environment variable is not set',
+          fix: [
+            '1. Go to Vercel Dashboard > Your Project > Settings > Environment Variables',
+            '2. Add DATABASE_URL with your database connection string',
+            '3. Redeploy your application',
+          ],
+        },
+        { status: 500 }
+      )
+    }
+
+    // Test database connection
+    try {
+      await prisma.$connect()
+      console.log('✅ Database connection successful')
+    } catch (connectionError: any) {
+      console.error('❌ Database connection failed:', connectionError)
+      return NextResponse.json(
+        {
+          error: 'Database connection failed',
+          details: connectionError.message,
+          fix: [
+            'Check that DATABASE_URL is correct',
+            'For Neon, ensure it ends with ?sslmode=require',
+            'Verify database credentials are valid',
+            'Check network/firewall settings',
+          ],
+        },
+        { status: 500 }
+      )
+    }
+
     // Hash password for test admin
     const passwordHash = await bcrypt.hash('admin123', 10)
 
@@ -166,14 +203,48 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Seed error:', error)
+
+    // Provide specific error guidance based on error type
+    let errorGuidance = []
+
+    if (error.message?.includes('connect')) {
+      errorGuidance = [
+        'DATABASE_URL may be incorrect or unreachable',
+        'For Neon: ensure connection string ends with ?sslmode=require',
+        'Check Vercel environment variables',
+      ]
+    } else if (error.message?.includes('Unique constraint')) {
+      errorGuidance = [
+        'Demo data already exists in database',
+        'Try the GET endpoint to retrieve existing credentials',
+        'Or delete existing demo data and try again',
+      ]
+    } else if (error.message?.includes('Foreign key')) {
+      errorGuidance = [
+        'Database schema may be out of sync',
+        'Run: npx prisma db push',
+        'Or check that migrations are applied',
+      ]
+    } else {
+      errorGuidance = [
+        'Check Vercel function logs for detailed error',
+        'Ensure DATABASE_URL is set correctly',
+        'Verify database schema is up to date',
+      ]
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to seed database',
         details: error.message,
-        hint: 'Make sure DATABASE_URL is set in Vercel environment variables',
+        errorType: error.constructor.name,
+        fix: errorGuidance,
+        troubleshooting: 'See SEEDING_TROUBLESHOOTING.md for detailed help',
       },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 

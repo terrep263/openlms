@@ -5,13 +5,39 @@ import { useState } from 'react'
 export default function SetupPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | any>('')
   const [setupKey, setSetupKey] = useState('setup-demo-data')
+  const [healthCheck, setHealthCheck] = useState<any>(null)
+
+  const runHealthCheck = async () => {
+    setLoading(true)
+    setError('')
+    setResult(null)
+    setHealthCheck(null)
+
+    try {
+      const response = await fetch('/api/setup/health')
+      const data = await response.json()
+      setHealthCheck(data)
+
+      if (!data.healthy) {
+        setError(data)
+      }
+    } catch (err: any) {
+      setError({
+        error: 'Health check failed',
+        details: err.message,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const checkStatus = async () => {
     setLoading(true)
     setError('')
     setResult(null)
+    setHealthCheck(null)
 
     try {
       const response = await fetch('/api/setup/seed')
@@ -44,13 +70,22 @@ export default function SetupPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Failed to seed database')
+        // Set the entire error object for detailed display
+        setError(data)
         return
       }
 
       setResult(data)
     } catch (err: any) {
-      setError(err.message)
+      setError({
+        error: 'Network or connection error',
+        details: err.message,
+        fix: [
+          'Check your internet connection',
+          'Verify the site is deployed and accessible',
+          'Try refreshing the page',
+        ],
+      })
     } finally {
       setLoading(false)
     }
@@ -84,7 +119,15 @@ export default function SetupPage() {
               </p>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={runHealthCheck}
+                disabled={loading}
+                className="rounded-lg border-2 border-blue-300 bg-blue-50 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+              >
+                {loading ? 'Checking...' : '🔍 Health Check'}
+              </button>
+
               <button
                 onClick={checkStatus}
                 disabled={loading}
@@ -106,7 +149,82 @@ export default function SetupPage() {
           {error && (
             <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
               <h3 className="font-semibold text-red-900">Error</h3>
-              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <div className="mt-2 text-sm text-red-700">
+                {typeof error === 'string' ? (
+                  <p>{error}</p>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="font-medium">{(error as any).error}</p>
+                    {(error as any).details && (
+                      <p className="text-xs">Details: {(error as any).details}</p>
+                    )}
+                    {(error as any).fix && Array.isArray((error as any).fix) && (
+                      <div className="mt-3">
+                        <p className="font-medium">How to fix:</p>
+                        <ul className="mt-1 list-inside list-disc space-y-1">
+                          {(error as any).fix.map((step: string, i: number) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {(error as any).troubleshooting && (
+                      <p className="mt-3 text-xs italic">
+                        💡 {(error as any).troubleshooting}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {healthCheck && healthCheck.healthy && (
+            <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <h3 className="font-semibold text-blue-900">
+                ✅ {healthCheck.message}
+              </h3>
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="rounded bg-white p-3">
+                  <p className="font-medium text-gray-900">Database Status</p>
+                  <ul className="mt-1 space-y-1 text-gray-700">
+                    <li>• Connection: {healthCheck.checks.connection.status}</li>
+                    <li>• Prisma: {healthCheck.checks.prisma.status}</li>
+                    <li>• Tenants: {healthCheck.checks.database.tenants}</li>
+                    <li>• Users: {healthCheck.checks.database.users}</li>
+                    <li>• Courses: {healthCheck.checks.database.courses}</li>
+                  </ul>
+                </div>
+
+                {healthCheck.checks.demoData.exists && (
+                  <div className="rounded bg-green-100 p-3">
+                    <p className="font-medium text-green-900">
+                      ✅ Demo Data Found
+                    </p>
+                    <p className="mt-1 text-green-800">
+                      Login: {healthCheck.checks.demoData.details.adminEmail} /
+                      admin123
+                    </p>
+                    <a
+                      href="/login"
+                      className="mt-2 inline-block rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
+                    >
+                      Go to Login
+                    </a>
+                  </div>
+                )}
+
+                {healthCheck.nextSteps && (
+                  <div className="rounded bg-white p-3">
+                    <p className="font-medium text-gray-900">Next Steps</p>
+                    <ul className="mt-1 space-y-1 text-gray-700">
+                      {healthCheck.nextSteps.map((step: string, i: number) => (
+                        <li key={i}>• {step}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -205,14 +323,29 @@ export default function SetupPage() {
           )}
 
           <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <h3 className="font-semibold text-blue-900">📝 What This Does</h3>
+            <h3 className="font-semibold text-blue-900">📝 How to Use</h3>
             <ul className="mt-2 space-y-1 text-sm text-blue-700">
-              <li>• Creates a demo tenant: "Demo School" (slug: demo-school)</li>
-              <li>• Creates admin user: admin@demo-school.com</li>
-              <li>• Creates student user: student@demo-school.com</li>
-              <li>• Creates 3 sample courses (free, paid, draft)</li>
-              <li>• Enrolls student in free course</li>
+              <li>
+                <strong>1. Health Check:</strong> Run this first to verify your
+                database connection
+              </li>
+              <li>
+                <strong>2. Check Status:</strong> See if demo data already exists
+              </li>
+              <li>
+                <strong>3. Seed Database:</strong> Create demo tenant, users, and
+                courses
+              </li>
             </ul>
+            <div className="mt-3 border-t border-blue-300 pt-3">
+              <p className="font-medium text-blue-900">What gets created:</p>
+              <ul className="mt-1 space-y-1 text-sm text-blue-700">
+                <li>• Demo tenant: "Demo School" (slug: demo-school)</li>
+                <li>• Admin user: admin@demo-school.com / admin123</li>
+                <li>• Student user: student@demo-school.com / student123</li>
+                <li>• 3 sample courses (free, paid, draft)</li>
+              </ul>
+            </div>
           </div>
 
           <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4">

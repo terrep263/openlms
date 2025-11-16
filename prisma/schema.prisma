@@ -1,0 +1,173 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum TenantPlan {
+  STARTER
+  PRO
+  AGENCY
+}
+
+enum UserRole {
+  TENANT_ADMIN
+  LEARNER
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+}
+
+enum AccessType {
+  FREE
+  PAID
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum CourseVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum EnrollmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Tenant {
+  id                      String       @id @default(uuid())
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  name                    String
+  slug                    String       @unique
+  logoUrl                 String?
+  primaryColor            String?
+  status                  TenantStatus @default(ACTIVE)
+  plan                    TenantPlan   @default(STARTER)
+  stripeCustomerId        String?
+  stripeConnectAccountId  String?
+
+  users                   User[]
+  courses                 Course[]
+  enrollments             Enrollment[]
+  orders                  Order[]
+
+  @@index([slug])
+}
+
+model User {
+  id           String      @id @default(uuid())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tenantId     String
+  email        String
+  passwordHash String
+  name         String
+  role         UserRole    @default(LEARNER)
+  status       UserStatus  @default(ACTIVE)
+
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+  orders       Order[]
+
+  @@unique([tenantId, email])
+  @@index([email])
+  @@index([tenantId])
+}
+
+model Course {
+  id           String            @id @default(uuid())
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  tenantId     String
+  title        String
+  slug         String
+  description  String?
+  thumbnailUrl String?
+  embedUrl     String?
+  accessType   AccessType        @default(FREE)
+  priceCents   Int?
+  currency     String            @default("usd")
+  status       CourseStatus      @default(DRAFT)
+  visibility   CourseVisibility  @default(PRIVATE)
+
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+  orders       Order[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([status, visibility])
+}
+
+model Enrollment {
+  id              String           @id @default(uuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tenantId        String
+  userId          String
+  courseId        String
+  status          EnrollmentStatus @default(NOT_STARTED)
+  firstAccessedAt DateTime?
+  lastAccessedAt  DateTime?
+  completedAt     DateTime?
+
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+model Order {
+  id                       String      @id @default(uuid())
+  createdAt                DateTime    @default(now())
+  updatedAt                DateTime    @updatedAt
+  tenantId                 String
+  userId                   String
+  courseId                 String
+  amountCents              Int
+  currency                 String      @default("usd")
+  stripeCheckoutSessionId  String?     @unique
+  stripePaymentIntentId    String?
+  status                   OrderStatus @default(PENDING)
+  paidAt                   DateTime?
+
+  tenant                   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user                     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course                   Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([stripeCheckoutSessionId])
+}

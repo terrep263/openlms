@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
     const freeCourse = await prisma.course.create({
       data: {
         tenantId: testTenant.id,
+        instructorId: testAdmin.id,
         title: 'Introduction to Web Development',
         slug: 'intro-to-web-dev',
         description: 'Learn the basics of HTML, CSS, and JavaScript in this beginner-friendly course.',
@@ -132,6 +133,7 @@ export async function POST(request: NextRequest) {
     const paidCourse = await prisma.course.create({
       data: {
         tenantId: testTenant.id,
+        instructorId: testAdmin.id,
         title: 'Advanced React Patterns',
         slug: 'advanced-react',
         description: 'Master advanced React patterns including hooks, context, and performance optimization.',
@@ -148,6 +150,7 @@ export async function POST(request: NextRequest) {
     const draftCourse = await prisma.course.create({
       data: {
         tenantId: testTenant.id,
+        instructorId: testAdmin.id,
         title: 'Coming Soon: Full Stack Development',
         slug: 'coming-soon',
         description: 'A comprehensive course on building full-stack applications.',

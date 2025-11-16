@@ -96,12 +96,6 @@ export default async function TenantAdminLayout({
         {/* Main Content */}
         <main className="flex-1 p-8">{children}</main>
       </div>
-
-      <style jsx>{`
-        :root {
-          --primary-color: ${primaryColor};
-        }
-      `}</style>
     </div>
   )
 }

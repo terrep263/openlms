@@ -39,11 +39,11 @@ export async function POST(request: NextRequest) {
           break
         }
 
-        // Update order to PAID
+        // Update order to COMPLETED
         await prisma.order.update({
           where: { id: orderId },
           data: {
-            status: 'PAID',
+            status: 'COMPLETED',
             paidAt: new Date(),
             stripePaymentIntentId: session.payment_intent as string,
           },

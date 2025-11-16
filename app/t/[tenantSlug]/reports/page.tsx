@@ -20,7 +20,7 @@ export default async function ReportsPage({
         },
       },
       orders: {
-        where: { status: 'PAID' },
+        where: { status: 'COMPLETED' },
         select: {
           amountCents: true,
         },

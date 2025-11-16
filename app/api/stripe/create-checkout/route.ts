@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: session.userId,
         courseId: course.id,
+        tenantId: session.tenantId,
         amountCents: priceInCents,
         currency: 'USD',
         status: 'PENDING',

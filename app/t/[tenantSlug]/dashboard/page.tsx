@@ -41,7 +41,7 @@ export default async function DashboardPage({
       },
     }),
     prisma.order.aggregate({
-      where: { tenantId: tenant.id, status: 'PAID' },
+      where: { tenantId: tenant.id, status: 'COMPLETED' },
       _sum: { amountCents: true },
     }),
     prisma.enrollment.findMany({

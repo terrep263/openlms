@@ -264,12 +264,13 @@ enum OrderStatus {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  amountCents Int
-  currency    String      @default("USD")
-  status      OrderStatus @default(PENDING)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                      String      @id @default(cuid())
+  amountCents             Int
+  currency                String      @default("USD")
+  status                  OrderStatus @default(PENDING)
+  stripeCheckoutSessionId String?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
 
   courseId    String
   course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)

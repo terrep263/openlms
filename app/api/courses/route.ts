@@ -42,16 +42,17 @@ export async function POST(request: NextRequest) {
     const course = await prisma.course.create({
       data: {
         tenantId: session.tenantId,
+        instructorId: session.userId, // Required field from schema
         title: data.title,
         slug: data.slug,
         description: data.description,
-        thumbnailUrl: data.thumbnailUrl,
-        embedUrl: data.embedUrl,
-        accessType: data.accessType,
-        priceCents: data.priceCents,
-        currency: data.currency,
-        status: data.status,
-        visibility: data.visibility,
+        thumbnail: data.thumbnail,
+        price: data.price || 0, // Decimal field
+        status: data.status || 'DRAFT',
+        featured: data.featured || false,
+        level: data.level,
+        duration: data.duration,
+        categoryId: data.categoryId,
       },
     })
 
@@ -127,13 +128,13 @@ export async function PUT(request: NextRequest) {
         title: data.title,
         slug: data.slug,
         description: data.description,
-        thumbnailUrl: data.thumbnailUrl,
-        embedUrl: data.embedUrl,
-        accessType: data.accessType,
-        priceCents: data.priceCents,
-        currency: data.currency,
+        thumbnail: data.thumbnail,
+        price: data.price,
         status: data.status,
-        visibility: data.visibility,
+        featured: data.featured,
+        level: data.level,
+        duration: data.duration,
+        categoryId: data.categoryId,
       },
     })
 

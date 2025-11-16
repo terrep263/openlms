@@ -50,6 +50,46 @@ export default function SetupPage() {
     }
   }
 
+  const pushSchema = async () => {
+    if (
+      !confirm(
+        'This will sync your database schema (create tables and types). Continue?'
+      )
+    ) {
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setResult(null)
+    setHealthCheck(null)
+
+    try {
+      const response = await fetch('/api/setup/push-schema', {
+        method: 'POST',
+        headers: {
+          'x-setup-key': setupKey,
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data)
+        return
+      }
+
+      setResult(data)
+    } catch (err: any) {
+      setError({
+        error: 'Failed to push schema',
+        details: err.message,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const seedDatabase = async () => {
     if (!confirm('This will create demo data in your database. Continue?')) {
       return
@@ -126,6 +166,14 @@ export default function SetupPage() {
                 className="rounded-lg border-2 border-blue-300 bg-blue-50 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"
               >
                 {loading ? 'Checking...' : '🔍 Health Check'}
+              </button>
+
+              <button
+                onClick={pushSchema}
+                disabled={loading}
+                className="rounded-lg border-2 border-purple-300 bg-purple-50 px-6 py-3 font-semibold text-purple-700 hover:bg-purple-100 disabled:opacity-50"
+              >
+                {loading ? 'Pushing...' : '📤 Push Schema'}
               </button>
 
               <button
@@ -330,10 +378,14 @@ export default function SetupPage() {
                 database connection
               </li>
               <li>
-                <strong>2. Check Status:</strong> See if demo data already exists
+                <strong>2. Push Schema:</strong> If health check fails with "schema
+                not synced", click this to create database tables/types
               </li>
               <li>
-                <strong>3. Seed Database:</strong> Create demo tenant, users, and
+                <strong>3. Check Status:</strong> See if demo data already exists
+              </li>
+              <li>
+                <strong>4. Seed Database:</strong> Create demo tenant, users, and
                 courses
               </li>
             </ul>

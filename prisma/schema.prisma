@@ -14,14 +14,31 @@ datasource db {
 enum Plan {
   FREE
   STARTER
+  PRO
   PROFESSIONAL
   ENTERPRISE
 }
 
 enum UserRole {
   ADMIN
+  TENANT_ADMIN
   INSTRUCTOR
   STUDENT
+  LEARNER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
 }
 
 enum CourseStatus {
@@ -30,8 +47,22 @@ enum CourseStatus {
   ARCHIVED
 }
 
+enum CourseAccessType {
+  FREE
+  PAID
+  SUBSCRIPTION
+}
+
+enum CourseVisibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
 enum EnrollmentStatus {
   ACTIVE
+  IN_PROGRESS
+  NOT_STARTED
   COMPLETED
   DROPPED
   PENDING
@@ -47,46 +78,53 @@ enum LessonType {
 
 // Models
 model Tenant {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  domain      String?  @unique
-  plan        Plan     @default(FREE)
-  logo        String?
-  primaryColor String? @default("#3B82F6")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id                      String        @id @default(cuid())
+  name                    String
+  slug                    String        @unique
+  domain                  String?       @unique
+  plan                    Plan          @default(FREE)
+  status                  TenantStatus  @default(ACTIVE)
+  logo                    String?
+  logoUrl                 String?       // Alias for logo
+  primaryColor            String?       @default("#3B82F6")
+  stripeCustomerId        String?       @unique
+  stripeConnectAccountId  String?       @unique
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
   // Relations
   users       User[]
   courses     Course[]
   categories  Category[]
-  
+
   @@index([slug])
   @@index([domain])
+  @@index([status])
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
+  id            String      @id @default(cuid())
+  email         String      @unique
   name          String?
   avatar        String?
-  role          UserRole  @default(STUDENT)
+  role          UserRole    @default(STUDENT)
+  status        UserStatus  @default(ACTIVE)
   passwordHash  String?
   emailVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
   tenantId      String
-  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Relations
-  enrollments   Enrollment[]
-  createdCourses Course[] @relation("CourseInstructor")
-  progress      LessonProgress[]
-  
+  enrollments    Enrollment[]
+  createdCourses Course[]         @relation("CourseInstructor")
+  progress       LessonProgress[]
+
   @@index([tenantId])
   @@index([email])
+  @@index([status])
 }
 
 model Category {
@@ -110,38 +148,47 @@ model Category {
 }
 
 model Course {
-  id          String        @id @default(cuid())
-  title       String
-  slug        String
-  description String?
-  thumbnail   String?
-  price       Decimal       @default(0) @db.Decimal(10, 2)
-  status      CourseStatus  @default(DRAFT)
-  featured    Boolean       @default(false)
-  level       String?
-  duration    Int?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  publishedAt DateTime?
-  
+  id           String              @id @default(cuid())
+  title        String
+  slug         String
+  description  String?
+  thumbnail    String?
+  thumbnailUrl String?             // Alias for thumbnail
+  embedUrl     String?
+  price        Decimal             @default(0) @db.Decimal(10, 2)
+  priceCents   Int?                // Price in cents for compatibility
+  currency     String?             @default("USD")
+  status       CourseStatus        @default(DRAFT)
+  accessType   CourseAccessType    @default(FREE)
+  visibility   CourseVisibility    @default(PUBLIC)
+  featured     Boolean             @default(false)
+  level        String?
+  duration     Int?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  publishedAt  DateTime?
+
   tenantId    String
   tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   instructorId String
   instructor   User         @relation("CourseInstructor", fields: [instructorId], references: [id])
-  
+
   categoryId   String?
   category     Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  
+
   // Relations
   modules      Module[]
   enrollments  Enrollment[]
-  
+  orders       Order[]
+
   @@unique([tenantId, slug])
   @@index([tenantId])
   @@index([instructorId])
   @@index([categoryId])
   @@index([status])
+  @@index([visibility])
+  @@index([accessType])
 }
 
 model Module {
@@ -186,13 +233,14 @@ model Lesson {
 }
 
 model Enrollment {
-  id             String           @id @default(cuid())
-  status         EnrollmentStatus @default(PENDING)
-  progress       Int              @default(0)
-  enrolledAt     DateTime         @default(now())
-  completedAt    DateTime?
-  lastAccessedAt DateTime?
-  updatedAt      DateTime         @updatedAt
+  id              String           @id @default(cuid())
+  status          EnrollmentStatus @default(PENDING)
+  progress        Int              @default(0)
+  enrolledAt      DateTime         @default(now())
+  completedAt     DateTime?
+  lastAccessedAt  DateTime?
+  firstAccessedAt DateTime?
+  updatedAt       DateTime         @updatedAt
 
   userId      String
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -200,9 +248,12 @@ model Enrollment {
   courseId    String
   course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  tenantId    String
+
   @@unique([userId, courseId])
   @@index([userId])
   @@index([courseId])
+  @@index([tenantId])
   @@index([status])
 }
 
@@ -212,14 +263,40 @@ model LessonProgress {
   completedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   lessonId    String
   lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, lessonId])
   @@index([userId])
   @@index([lessonId])
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  amountCents Int
+  currency    String      @default("USD")
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  courseId    String
+  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  userId      String
+
+  @@index([courseId])
+  @@index([userId])
+  @@index([status])
 }

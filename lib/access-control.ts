@@ -32,7 +32,17 @@ export async function requireAuth(): Promise<SessionPayload> {
  */
 export async function validateTenantAdmin(tenantSlug: string): Promise<{
   session: SessionPayload
-  tenant: { id: string; name: string; slug: string; status: string; plan: string; logoUrl: string | null; primaryColor: string | null }
+  tenant: {
+    id: string
+    name: string
+    slug: string
+    status: string
+    plan: string
+    logoUrl: string | null
+    primaryColor: string | null
+    stripeCustomerId: string | null
+    stripeConnectAccountId: string | null
+  }
 }> {
   const session = await requireAuth()
 
@@ -47,6 +57,8 @@ export async function validateTenantAdmin(tenantSlug: string): Promise<{
       plan: true,
       logoUrl: true,
       primaryColor: true,
+      stripeCustomerId: true,
+      stripeConnectAccountId: true,
     },
   })
 

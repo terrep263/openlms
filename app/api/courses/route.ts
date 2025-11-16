@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const validation = courseSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors[0].message },
+        { error: validation.error.issues[0]?.message || 'Validation failed' },
         { status: 400 }
       )
     }
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
     const validation = courseSchema.safeParse(courseData)
     if (!validation.success) {
       return NextResponse.json(
-        { error: validation.error.errors[0].message },
+        { error: validation.error.issues[0]?.message || 'Validation failed' },
         { status: 400 }
       )
     }

@@ -35,7 +35,7 @@ export default async function DashboardPage({
     prisma.enrollment.count({
       where: {
         tenantId: tenant.id,
-        createdAt: {
+        enrolledAt: {
           gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
         },
       },
@@ -50,7 +50,7 @@ export default async function DashboardPage({
         user: { select: { name: true, email: true } },
         course: { select: { title: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { enrolledAt: 'desc' },
       take: 10,
     }),
   ])

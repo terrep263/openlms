@@ -186,19 +186,20 @@ model Lesson {
 }
 
 model Enrollment {
-  id          String           @id @default(cuid())
-  status      EnrollmentStatus @default(PENDING)
-  progress    Int              @default(0)
-  enrolledAt  DateTime         @default(now())
-  completedAt DateTime?
-  updatedAt   DateTime         @updatedAt
-  
+  id             String           @id @default(cuid())
+  status         EnrollmentStatus @default(PENDING)
+  progress       Int              @default(0)
+  enrolledAt     DateTime         @default(now())
+  completedAt    DateTime?
+  lastAccessedAt DateTime?
+  updatedAt      DateTime         @updatedAt
+
   userId      String
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   courseId    String
   course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, courseId])
   @@index([userId])
   @@index([courseId])

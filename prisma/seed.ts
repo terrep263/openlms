@@ -13,7 +13,7 @@ async function main() {
     create: {
       name: 'Demo Academy',
       slug: 'demo',
-      plan: Plan.PROFESSIONAL, // ✅ Using Plan enum correctly
+      plan: Plan.PROFESSIONAL,
       logo: '/logo.png',
       primaryColor: '#3B82F6',
     },
